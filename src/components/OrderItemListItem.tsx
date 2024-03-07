@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
   quantity: {
     fontWeight: "500",
     fontSize: 18,
+    marginRight: 10,
   },
   price: {
     color: Colors.light.tint,
