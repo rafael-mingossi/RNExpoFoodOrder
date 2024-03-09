@@ -7,16 +7,7 @@ import {
 } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/src/lib/supabase";
-
-type Profile = {
-  avatar_url: string;
-  full_name: string;
-  group: "USER" | "ADMIN";
-  id: string;
-  updated_at: string;
-  username: string;
-  website: string;
-};
+import { Profile } from "@/src/types/types";
 
 type AuthData = {
   session: Session | null;
