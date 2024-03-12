@@ -2,29 +2,49 @@ import { View, Text, StyleSheet, Image } from "react-native";
 import React from "react";
 import Colors from "../constants/Colors";
 import { defaultPizzaImage } from "@/src/components/ProductListItem";
-import { CartItem, OrderItem, Product } from "@/src/types/types";
+// import { Tables } from "@/src/types/types";
 
+// type OrderItemListItemProps = {
+//   item: Tables<"order_items"> & {
+//     products: Tables<"products">;
+//   };
+// };
 type OrderItemListItemProps = {
-  item: OrderItem;
+  item: {
+    created_at: string;
+    id: number;
+    order_id: number;
+    product_id: number;
+    quantity: number;
+    size: string;
+    products: {
+      created_at: string;
+      id: number;
+      image: string | null;
+      name: string;
+      price: number;
+    } | null;
+  };
 };
 
 const OrderItemListItem = ({ item }: OrderItemListItemProps) => {
+  console.log("ITEM =>>", item);
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: item.products.image || defaultPizzaImage }}
+        source={{ uri: item?.products?.image || defaultPizzaImage }}
         style={styles.image}
         resizeMode="contain"
       />
       <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{item.products.name}</Text>
+        <Text style={styles.title}>{item?.products?.name}</Text>
         <View style={styles.subtitleContainer}>
-          <Text style={styles.price}>${item.products.price.toFixed(2)}</Text>
-          <Text>Size: {item.size}</Text>
+          <Text style={styles.price}>${item?.products?.price.toFixed(2)}</Text>
+          <Text>Size: {item?.size}</Text>
         </View>
       </View>
       <View style={styles.quantitySelector}>
-        <Text style={styles.quantity}>{item.quantity}</Text>
+        <Text style={styles.quantity}>{item?.quantity}</Text>
       </View>
     </View>
   );
