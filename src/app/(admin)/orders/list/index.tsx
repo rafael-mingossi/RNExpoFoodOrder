@@ -1,8 +1,8 @@
 import React from "react";
 import { ActivityIndicator, FlatList, Text } from "react-native";
-// import orders from "@/assets/data/orders";
 import { useAdminOrdersList } from "@/src/api/orders";
 import OrderListItem from "@/src/components/OrderListItem";
+import { useInsertOrderSubscription } from "@/src/api/orders/subscriptions";
 
 const OrdersScreen = () => {
   const {
@@ -14,6 +14,8 @@ const OrdersScreen = () => {
   if (isLoading) return <ActivityIndicator />;
 
   if (error) return <Text>Failed to fetch</Text>;
+
+  useInsertOrderSubscription();
 
   return (
     <>

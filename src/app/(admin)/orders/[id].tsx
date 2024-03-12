@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   FlatList,
@@ -12,19 +12,32 @@ import OrderItemListItem from "@/src/components/OrderItemListItem";
 import OrderListItem from "@/src/components/OrderListItem";
 import { OrderStatusList } from "@/src/types/types";
 import Colors from "@/src/constants/Colors";
-import { useOrderDetails } from "@/src/api/orders";
+import { useOrderDetails, useUpdateOrder } from "@/src/api/orders";
 const OrderDetailsScreen = () => {
   const { id: idString } = useLocalSearchParams();
   const id = parseFloat(
     typeof idString === "string" ? idString : idString?.[0],
   );
 
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
   const { data: order, error, isLoading } = useOrderDetails(id);
+  const { mutate: updateOrder } = useUpdateOrder();
+
   if (isLoading) return <ActivityIndicator />;
 
   if (error) return <Text>Failed to fetch</Text>;
 
   if (!order) return <Text>Order not found</Text>;
+
+  const updateStatus = (status: string) => {
+    setLoadingStatus(true);
+    updateOrder(
+      { id, userInput: { status } },
+      { onSuccess: () => setLoadingStatus(false) },
+    );
+    setLoadingStatus(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -43,7 +56,7 @@ const OrderDetailsScreen = () => {
               {OrderStatusList.map((status) => (
                 <Pressable
                   key={status}
-                  onPress={() => console.warn("Update status")}
+                  onPress={() => updateStatus(status)}
                   style={{
                     borderColor: Colors.light.tint,
                     borderWidth: 1,
@@ -62,7 +75,7 @@ const OrderDetailsScreen = () => {
                         order?.status === status ? "white" : Colors.light.tint,
                     }}
                   >
-                    {status}
+                    {loadingStatus ? <ActivityIndicator /> : status}
                   </Text>
                 </Pressable>
               ))}

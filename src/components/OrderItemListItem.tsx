@@ -28,7 +28,6 @@ type OrderItemListItemProps = {
 };
 
 const OrderItemListItem = ({ item }: OrderItemListItemProps) => {
-  console.log("ITEM =>>", item);
   return (
     <View style={styles.container}>
       <Image
