@@ -1,25 +1,36 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import Colors from "@/src/constants/Colors";
 import Button from "@/src/components/Button";
 import { Link, Stack } from "expo-router";
+import { supabase } from "@/src/lib/supabase";
 
 const SignUp = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onRegister = () => {};
+  const passwordRef = useRef<TextInput | null>(null);
+  async function signUpWithEmail() {
+    setLoading(true);
+    const { error, data } = await supabase.auth.signUp({ email, password });
+
+    if (error) Alert.alert(error.message);
+
+    setLoading(false);
+  }
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: "Sign up" }} />
       <Text style={styles.label}>Email</Text>
       <TextInput
-        value={username}
+        value={email}
         style={styles.input}
         placeholder={"Email"}
         keyboardType={"email-address"}
-        onChangeText={setUsername}
+        onChangeText={setEmail}
+        onSubmitEditing={() => passwordRef.current?.focus()}
       />
       <Text style={styles.label}>Password</Text>
       <TextInput
@@ -28,9 +39,14 @@ const SignUp = () => {
         placeholder={"****"}
         onChangeText={setPassword}
         secureTextEntry
+        onSubmitEditing={() => signUpWithEmail()}
       />
 
-      <Button onPress={onRegister} text={"Create account"} />
+      <Button
+        onPress={signUpWithEmail}
+        disabled={loading}
+        text={loading ? "Creating..." : "Create account"}
+      />
       <Link href={"/sign-in"} asChild>
         <Text style={styles.textButton}>Back to Sign In</Text>
       </Link>

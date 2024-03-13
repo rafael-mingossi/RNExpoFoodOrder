@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, View, StyleSheet, Pressable } from "react-native";
-import { Order } from "@/src/types/types";
+import { Tables } from "@/src/types/types";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Link, useSegments } from "expo-router";
@@ -12,7 +12,7 @@ import { Link, useSegments } from "expo-router";
 dayjs.extend(relativeTime);
 
 type OrderListProps = {
-  order: Order;
+  order: Tables<"orders">;
 };
 
 // function getHours(date: Dayjs | string): number {
@@ -20,20 +20,21 @@ type OrderListProps = {
 // }
 const OrderListItem = ({ order }: OrderListProps) => {
   const segments = useSegments();
+
   return (
     // @ts-ignore
     <Link href={`/${segments[0]}/orders/${order.id}`} asChild>
       <Pressable style={styles.container}>
         <View>
-          <Text style={styles.header}>Order #{order.id}</Text>
+          <Text style={styles.header}>Order #{order?.id}</Text>
           {/*<Text style={styles.hourTxt}>*/}
           {/*  {getHours(order.created_at)} hours ago*/}
           {/*</Text>*/}
           <Text style={styles.hourTxt}>
-            {dayjs(order.created_at).fromNow()}
+            {dayjs(order?.created_at).fromNow()}
           </Text>
         </View>
-        <Text style={styles.statusTxt}>{order.status}</Text>
+        <Text style={styles.statusTxt}>{order?.status}</Text>
       </Pressable>
     </Link>
   );

@@ -1,36 +1,56 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import Colors from "@/src/constants/Colors";
 import Button from "@/src/components/Button";
 import { Link, Stack } from "expo-router";
+import { supabase } from "@/src/lib/supabase";
 
 const SignIn = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onLogin = () => {};
+  const passwordRef = useRef<TextInput | null>(null);
+  async function signInWithEmail() {
+    setLoading(true);
+    const { error, data } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) Alert.alert(error.message);
+
+    setLoading(false);
+  }
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: "Sign in" }} />
       <Text style={styles.label}>Email</Text>
       <TextInput
-        value={username}
+        value={email}
         style={styles.input}
         placeholder={"Email"}
         keyboardType={"email-address"}
-        onChangeText={setUsername}
+        onChangeText={setEmail}
+        onSubmitEditing={() => passwordRef.current?.focus()}
       />
       <Text style={styles.label}>Password</Text>
       <TextInput
+        ref={passwordRef}
         value={password}
         style={styles.input}
         placeholder={"Password"}
         onChangeText={setPassword}
         secureTextEntry
+        onSubmitEditing={() => signInWithEmail()}
       />
 
-      <Button onPress={onLogin} text={"Sign In"} />
+      <Button
+        onPress={signInWithEmail}
+        disabled={loading}
+        text={loading ? " Signing in..." : "Sign In"}
+      />
       <Link href={"/sign-up"} asChild>
         <Text style={styles.textButton}>Create an account</Text>
       </Link>

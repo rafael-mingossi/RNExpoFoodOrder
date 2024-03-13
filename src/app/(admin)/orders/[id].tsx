@@ -1,24 +1,52 @@
-import React from "react";
-import { StyleSheet, FlatList, View, Pressable, Text } from "react-native";
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  FlatList,
+  View,
+  Pressable,
+  Text,
+  ActivityIndicator,
+} from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import orders from "@/assets/data/orders";
 import OrderItemListItem from "@/src/components/OrderItemListItem";
 import OrderListItem from "@/src/components/OrderListItem";
 import { OrderStatusList } from "@/src/types/types";
 import Colors from "@/src/constants/Colors";
+import { useOrderDetails, useUpdateOrder } from "@/src/api/orders";
 const OrderDetailsScreen = () => {
-  const { id } = useLocalSearchParams();
+  const { id: idString } = useLocalSearchParams();
+  const id = parseFloat(
+    typeof idString === "string" ? idString : idString?.[0],
+  );
 
-  const order = orders.find((o) => o.id.toString() === id)!;
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
+  const { data: order, error, isLoading } = useOrderDetails(id);
+  const { mutate: updateOrder } = useUpdateOrder();
+
+  if (isLoading) return <ActivityIndicator />;
+
+  if (error) return <Text>Failed to fetch</Text>;
+
+  if (!order) return <Text>Order not found</Text>;
+
+  const updateStatus = (status: string) => {
+    setLoadingStatus(true);
+    updateOrder(
+      { id, userInput: { status } },
+      { onSuccess: () => setLoadingStatus(false) },
+    );
+    setLoadingStatus(false);
+  };
 
   return (
-    <View style={{ padding: 10, gap: 20, flex: 1 }}>
-      <Stack.Screen options={{ title: `Order #${order.id}` }} />
+    <View style={styles.container}>
+      <Stack.Screen options={{ title: `Order #${id}` }} />
 
       <OrderListItem order={order} />
 
       <FlatList
-        data={order.order_items}
+        data={order?.order_items}
         renderItem={({ item }) => <OrderItemListItem item={item} />}
         contentContainerStyle={{ gap: 10 }}
         ListFooterComponent={() => (
@@ -28,7 +56,7 @@ const OrderDetailsScreen = () => {
               {OrderStatusList.map((status) => (
                 <Pressable
                   key={status}
-                  onPress={() => console.warn("Update status")}
+                  onPress={() => updateStatus(status)}
                   style={{
                     borderColor: Colors.light.tint,
                     borderWidth: 1,
@@ -36,7 +64,7 @@ const OrderDetailsScreen = () => {
                     borderRadius: 5,
                     marginVertical: 10,
                     backgroundColor:
-                      order.status === status
+                      order?.status === status
                         ? Colors.light.tint
                         : "transparent",
                   }}
@@ -44,10 +72,10 @@ const OrderDetailsScreen = () => {
                   <Text
                     style={{
                       color:
-                        order.status === status ? "white" : Colors.light.tint,
+                        order?.status === status ? "white" : Colors.light.tint,
                     }}
                   >
-                    {status}
+                    {loadingStatus ? <ActivityIndicator /> : status}
                   </Text>
                 </Pressable>
               ))}
@@ -63,7 +91,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 10,
     flex: 1,
-    gap: 10,
+    gap: 20,
   },
 });
 export default OrderDetailsScreen;
