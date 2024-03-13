@@ -54,7 +54,7 @@ export const useUpdateOrderSubscriptionList = (id: string | undefined) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const orders = supabase
+    const ordersList = supabase
       .channel("custom-filter-channel")
       .on(
         "postgres_changes",
@@ -73,7 +73,7 @@ export const useUpdateOrderSubscriptionList = (id: string | undefined) => {
       .subscribe();
 
     return () => {
-      orders.unsubscribe();
+      ordersList.unsubscribe();
     };
   }, []);
 };

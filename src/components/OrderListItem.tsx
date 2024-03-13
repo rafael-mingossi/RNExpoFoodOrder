@@ -20,6 +20,7 @@ type OrderListProps = {
 // }
 const OrderListItem = ({ order }: OrderListProps) => {
   const segments = useSegments();
+
   return (
     // @ts-ignore
     <Link href={`/${segments[0]}/orders/${order.id}`} asChild>
