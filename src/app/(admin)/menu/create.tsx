@@ -1,18 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, TextInput, Image, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import Button from "@/src/components/Button";
 import Colors from "../../../constants/Colors";
 import { defaultPizzaImage } from "@/src/components/ProductListItem";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  useDeleteProduct,
+  useInsertProduct,
+  useProduct,
+  useUpdateProduct,
+} from "@/src/api/products";
+import * as FileSystem from "expo-file-system";
+import { randomUUID } from "expo-crypto";
+import { supabase } from "@/src/lib/supabase";
+import { decode } from "base64-arraybuffer";
 const Create = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [errors, setErrors] = useState("");
   const [image, setImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+  const [loadingCreate, setLoadingCreate] = useState(false);
 
-  const { id } = useLocalSearchParams();
-  const isUpdating = !!id;
+  const router = useRouter();
+  const { id: idString } = useLocalSearchParams();
+
+  const id = parseFloat(
+    typeof idString === "string" ? idString : idString?.[0],
+  );
+
+  const isUpdating = !!idString;
+
+  const { mutate: insertProduct } = useInsertProduct();
+  const { mutate: updateProduct } = useUpdateProduct();
+  const { mutate: deleteProduct } = useDeleteProduct();
+  const { data: updatingProduct } = useProduct(id);
+
+  useEffect(() => {
+    if (updatingProduct) {
+      setName(updatingProduct.name);
+      setPrice(updatingProduct.price.toString());
+      setImage(updatingProduct.image);
+    }
+  }, [updatingProduct]);
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -30,12 +62,26 @@ const Create = () => {
     setPrice("");
     setName("");
   };
-  const onCreate = () => {
+  const onCreate = async () => {
+    setLoadingCreate(true);
+
     if (!validateInput()) {
+      setLoadingCreate(false);
       return;
     }
 
-    resetFields();
+    const imagePath = await uploadImage();
+
+    insertProduct(
+      { name, price: parseFloat(price), image: imagePath },
+      {
+        onSuccess: () => {
+          resetFields();
+          setLoadingCreate(false);
+          router.back();
+        },
+      },
+    );
   };
 
   const validateInput = () => {
@@ -55,16 +101,45 @@ const Create = () => {
     return true;
   };
 
+  const onUpdate = async () => {
+    setLoading(true);
+    if (!validateInput()) {
+      setLoading(false);
+      return;
+    }
+
+    const imagePath = await uploadImage();
+
+    updateProduct(
+      { id, name, price: parseFloat(price), image: imagePath },
+      {
+        onSuccess: () => {
+          resetFields();
+          router.back();
+          setLoading(false);
+        },
+      },
+    );
+  };
+
   const onSubmit = () => {
     if (isUpdating) {
-      // update
-      // onUpdate();
+      onUpdate();
     } else {
       onCreate();
     }
   };
 
-  const onDelete = () => {};
+  const onDelete = () => {
+    setLoadingDelete(true);
+    deleteProduct(id, {
+      onSuccess: () => {
+        resetFields();
+        setLoadingDelete(false);
+        router.replace("/(admin)");
+      },
+    });
+  };
   const confirmDelete = () => {
     Alert.alert(
       "Confirm Deletion",
@@ -80,6 +155,25 @@ const Create = () => {
         },
       ],
     );
+  };
+
+  const uploadImage = async () => {
+    if (!image?.startsWith("file://")) {
+      return;
+    }
+
+    const base64 = await FileSystem.readAsStringAsync(image, {
+      encoding: "base64",
+    });
+    const filePath = `${randomUUID()}.png`;
+    const contentType = "image/png";
+    const { data, error } = await supabase.storage
+      .from("product-images")
+      .upload(filePath, decode(base64), { contentType });
+
+    if (data) {
+      return data.path;
+    }
   };
 
   return (
@@ -110,10 +204,25 @@ const Create = () => {
         onChangeText={setPrice}
       />
       <Text style={{ color: "red" }}>{errors}</Text>
-      <Button onPress={onSubmit} text={isUpdating ? "Update" : "Create"} />
+      <Button
+        disabled={loading || loadingDelete || loadingCreate}
+        onPress={onSubmit}
+        text={
+          isUpdating
+            ? loading
+              ? "Updating..."
+              : "Update"
+            : loadingCreate
+              ? "Creating..."
+              : "Create"
+        }
+      />
       {isUpdating && (
-        <Text onPress={confirmDelete} style={styles.textButton}>
-          Delete
+        <Text
+          onPress={confirmDelete}
+          style={loadingDelete ? styles.textButtonDeleting : styles.textButton}
+        >
+          {loadingDelete ? "Deleting..." : "Delete"}
         </Text>
       )}
     </View>
@@ -137,7 +246,13 @@ const styles = StyleSheet.create({
     color: Colors.light.tint,
     marginVertical: 10,
   },
-
+  textButtonDeleting: {
+    alignSelf: "center",
+    fontWeight: "bold",
+    color: "gray",
+    marginVertical: 10,
+    pointerEvents: "none",
+  },
   input: {
     backgroundColor: "white",
     padding: 10,
