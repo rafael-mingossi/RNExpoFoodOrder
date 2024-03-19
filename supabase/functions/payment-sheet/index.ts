@@ -2,7 +2,6 @@
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { stripe } from "../_utils/stripe.ts";
 
 console.log("Hello from Functions!");
@@ -12,7 +11,7 @@ Deno.serve(async (req) => {
     const { amount } = await req.json();
 
     const paymentIntent = await stripe?.paymentIntents.create({
-      amount: 1099,
+      amount: amount,
       currency: "usd",
     });
 
