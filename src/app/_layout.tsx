@@ -12,6 +12,8 @@ import CartProvider from "@/src/providers/CartProvider";
 import AuthProvider from "@/src/providers/AuthProvider";
 import QueryProvider from "@/src/providers/QueryProvider";
 import { useColorScheme } from "@/src/components/useColorScheme";
+import { StripeProvider } from "@stripe/stripe-react-native";
+import NotificationProvider from "@/src/providers/NotificationProvider.tsx";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,21 +54,38 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const key = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <QueryProvider>
-          <CartProvider>
-            <Stack>
-              <Stack.Screen name="(user)" options={{ headerShown: false }} />
-              <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="cart" options={{ presentation: "modal" }} />
-            </Stack>
-          </CartProvider>
-        </QueryProvider>
-      </AuthProvider>
+      <StripeProvider publishableKey={key}>
+        <AuthProvider>
+          <QueryProvider>
+            <NotificationProvider>
+              <CartProvider>
+                <Stack>
+                  <Stack.Screen
+                    name="(user)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="(admin)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="(auth)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="cart"
+                    options={{ presentation: "modal" }}
+                  />
+                </Stack>
+              </CartProvider>
+            </NotificationProvider>
+          </QueryProvider>
+        </AuthProvider>
+      </StripeProvider>
     </ThemeProvider>
   );
 }
