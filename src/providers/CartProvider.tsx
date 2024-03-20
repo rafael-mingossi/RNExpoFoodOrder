@@ -4,6 +4,7 @@ import { randomUUID } from "expo-crypto";
 import { useInsertOrder } from "@/src/api/orders";
 import { useRouter } from "expo-router";
 import { useInsertOrderItems } from "@/src/api/order-items";
+import { initialisePaymentSheet, openPaymentSheet } from "@/src/lib/stripe.ts";
 
 type Product = Tables<"products">;
 
@@ -74,7 +75,14 @@ const CartProvider = ({ children }: PropsWithChildren) => {
     setItems([]);
   };
 
-  const checkout = () => {
+  const checkout = async () => {
+    await initialisePaymentSheet(Math.floor(total * 100));
+    const paid = await openPaymentSheet();
+    console.log("PAID =>>", paid);
+    if (!paid) {
+      return;
+    }
+
     insertOrder(
       { total },
       {
