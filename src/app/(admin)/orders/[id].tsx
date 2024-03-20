@@ -13,6 +13,7 @@ import OrderListItem from "@/src/components/OrderListItem";
 import { OrderStatusList } from "@/src/types/types";
 import Colors from "@/src/constants/Colors";
 import { useOrderDetails, useUpdateOrder } from "@/src/api/orders";
+import { notifyUserAboutOrderUpdate } from "@/src/lib/notifications.ts";
 const OrderDetailsScreen = () => {
   const { id: idString } = useLocalSearchParams();
   const id = parseFloat(
@@ -30,12 +31,20 @@ const OrderDetailsScreen = () => {
 
   if (!order) return <Text>Order not found</Text>;
 
-  const updateStatus = (status: string) => {
+  const updateStatus = async (status: string) => {
     setLoadingStatus(true);
-    updateOrder(
-      { id, userInput: { status } },
+    await updateOrder(
+      {
+        id: id,
+        userInput: { status },
+      },
       { onSuccess: () => setLoadingStatus(false) },
     );
+
+    if (order) {
+      await notifyUserAboutOrderUpdate({ ...order, status });
+    }
+
     setLoadingStatus(false);
   };
 

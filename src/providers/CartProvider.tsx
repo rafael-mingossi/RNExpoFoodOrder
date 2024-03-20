@@ -78,7 +78,6 @@ const CartProvider = ({ children }: PropsWithChildren) => {
   const checkout = async () => {
     await initialisePaymentSheet(Math.floor(total * 100));
     const paid = await openPaymentSheet();
-    console.log("PAID =>>", paid);
     if (!paid) {
       return;
     }
